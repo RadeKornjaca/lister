@@ -1,8 +1,3 @@
-use std::error::Error;
-use csv::Writer;
-use std::io::Write;
-use std::path::PathBuf;
-
 #[derive(Debug, Serialize)]
 struct Student {
     #[serde(rename = "Broj indeksa")]

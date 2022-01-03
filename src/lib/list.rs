@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use std::fs::File;
 use std::error::Error;
 use std::env;
-use std::ffi::OsString;
 use csv::Reader;
 use csv::Writer;
 use std::io::Read;
