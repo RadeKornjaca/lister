@@ -1,6 +1,14 @@
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+
+mod lib;
+use crate::lib::extract::extract;
+use crate::lib::list::list;
+use crate::lib::table::table;
+
 use std::path::PathBuf;
 use structopt::StructOpt;
-use lister::lib::*;
 use std::error::Error;
 
 #[derive(Debug, StructOpt)]
