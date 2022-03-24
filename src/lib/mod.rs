@@ -1,4 +1,4 @@
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Student {
     #[serde(rename = "Broj indeksa")]
     index: String,

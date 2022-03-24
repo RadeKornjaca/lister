@@ -3,7 +3,7 @@ use super::CSV_EXTENSION as CSV_EXTENSION;
 use std::path::PathBuf;
 use std::fs::File;
 use std::error::Error;
-use std::env;
+use std::env::current_dir;
 use csv::Reader;
 use csv::Writer;
 use std::io::Read;
@@ -17,7 +17,7 @@ pub fn list(lab_filename: PathBuf) -> Result<(), Box<dyn Error>> {
 
     let mut students = parse_students_from_lab_file(&mut lab_data)?;
 
-    let current_dirpath = env::current_dir()?;
+    let current_dirpath = current_dir()?;
     let mut grading_filename = match current_dirpath.file_name() {
         Some(d) => d.to_os_string(),
         None    => panic!("Cannot get current directory name!")

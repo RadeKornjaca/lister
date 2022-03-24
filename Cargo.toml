@@ -2,9 +2,13 @@
 name = "lister"
 version = "0.1.0"
 authors = ["Rade Radišić <radisic.rade@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.dev]
+opt-level = 0
+debug = true
 
 [dependencies]
 structopt = { version = "0.3", features = [ "paw" ] }
@@ -12,3 +16,6 @@ paw = "1.0"
 csv = "1"
 serde = "1"
 serde_derive = "1"
+tar = "0.4"
+flate2 = "1.0"
+pdf-writer = "0.5"
