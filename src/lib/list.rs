@@ -13,7 +13,9 @@ type LabCsvRecord = (String, String, String,);
 
 pub fn list(lab_filename: PathBuf) -> Result<(), Box<dyn Error>> {
     let lab_csv_file = File::open(lab_filename)?;
-    let mut lab_data = csv::Reader::from_reader(lab_csv_file);
+    let mut lab_data = csv::ReaderBuilder::new()
+                        .has_headers(false)
+                        .from_reader(lab_csv_file);
 
     let mut students = parse_students_from_lab_file(&mut lab_data)?;
 
@@ -94,18 +96,17 @@ s103, ra323-2021, Milana Milovanovic
 
         Ok(())
     }
-}
 
-#[test]
-fn fill_grading_csv_file_basic() -> Result<(), Box<dyn Error>> {
-    let mut students = vec![
-        Student { index: "ra305-2021".to_string(), name: "Lazar Lazarevic".to_string()   , points: None, comment: None, },
-        Student { index: "ra301-2021".to_string(), name: "Petar Petrovic".to_string()    , points: None, comment: None, },
-        Student { index: "ra357-2021".to_string(), name: "Ana Aleksic".to_string()       , points: None, comment: None, },
-        Student { index: "ra323-2021".to_string(), name: "Milana Milovanovic".to_string(), points: None, comment: None, },
-    ];
+    #[test]
+    fn fill_grading_csv_file_basic() -> Result<(), Box<dyn Error>> {
+        let mut students = vec![
+            Student { index: "ra305-2021".to_string(), name: "Lazar Lazarevic".to_string()   , points: None, comment: None, },
+            Student { index: "ra301-2021".to_string(), name: "Petar Petrovic".to_string()    , points: None, comment: None, },
+            Student { index: "ra357-2021".to_string(), name: "Ana Aleksic".to_string()       , points: None, comment: None, },
+            Student { index: "ra323-2021".to_string(), name: "Milana Milovanovic".to_string(), points: None, comment: None, },
+        ];
 
-    let expected_data = "\
+        let expected_data = "\
 Broj indeksa,Ime i prezime,Broj poena,Komentar
 ra301-2021,Petar Petrovic,,
 ra305-2021,Lazar Lazarevic,,
@@ -113,13 +114,15 @@ ra323-2021,Milana Milovanovic,,
 ra357-2021,Ana Aleksic,,
 ";
 
-    let mut wrt = csv::WriterBuilder::new().from_writer(vec![]);
+        let mut wrt = csv::WriterBuilder::new().from_writer(vec![]);
 
-    fill_grading_csv_file(&mut wrt, &mut students)?;
+        fill_grading_csv_file(&mut wrt, &mut students)?;
 
-    let data = String::from_utf8(wrt.into_inner()?)?;
+        let data = String::from_utf8(wrt.into_inner()?)?;
 
-    assert_eq!(data, expected_data);
+        assert_eq!(data, expected_data);
 
-    Ok(())
+        Ok(())
+    }
+
 }
