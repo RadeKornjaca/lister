@@ -23,7 +23,7 @@ pub fn table(students_grading_csv_path: PathBuf) -> Result<(), Box<dyn Error>> {
     table_filename.set_extension(PDF_EXTENSION);
 
     let pdf_writer = PdfWriter::new();
-    create_pdf_table_file(pdf_writer, students, table_filename)?;
+    create_pdf_table_file(pdf_writer, &students, table_filename)?;
 
     Ok(())
 }
@@ -39,7 +39,12 @@ fn parse_students_from_grading_file<R: Read>(students_grading_data: &mut Reader<
     Ok(students_results)
 }
 
-fn create_pdf_table_file(mut pdf_writer: PdfWriter, students: Vec<Student>, pdf_filename_path: PathBuf) -> Result<(), Box<dyn Error>> {
+fn create_pdf_table_file(mut pdf_writer: PdfWriter, students: &Vec<Student>, pdf_filename_path: PathBuf) -> Result<(), Box<dyn Error>> {
+    let table_width = 469.8898;
+    // let table_height = students.len() as f32 * 18.0;
+    let table_height = 558.0;
+    let row_step = 36.0;
+    
     let catalog_id = Ref::new(1);
     let page_tree_id = Ref::new(2);
     let page_id = Ref::new(3);
@@ -64,6 +69,131 @@ fn create_pdf_table_file(mut pdf_writer: PdfWriter, students: Vec<Student>, pdf_
 
     let mut content = Content::new();
 
+    create_table_rows(&mut content, table_height, table_width, row_step, students.len());
+    create_table_header(&mut content, font_name);    
+
+    // FIXME: Extra columns for less than 30 students in group
+    let mut text_position = 525.0;
+    let text_step = row_step / 2.0;
+
+    for student in students {
+        // Index number
+        content.set_fill_rgb(0.0, 0.0, 0.0);
+        content.save_state();
+        content.transform([1.0, 0.0, 0.0, 1.0, 6.0, text_position]);
+        content.save_state();
+        content.begin_text();
+        content.set_text_matrix([1.0, 0.0, 0.0, 1.0, 0.0, 2.0]);
+        content.set_font(font_name, 10.0);
+        content.set_leading(12.0);
+        content.show(Str(student.index.as_bytes()));
+        content.next_line_using_leading();
+        content.end_text();
+        content.restore_state();
+        content.restore_state();
+        content.save_state();
+
+        // First and last name of the student
+        content.transform([1.0, 0.0, 0.0, 1.0, 95.50281, text_position]);
+        content.save_state();
+        content.set_fill_rgb(0.0, 0.0, 0.0);
+        content.begin_text();
+        content.set_text_matrix([1.0, 0.0, 0.0, 1.0, 0.0, 2.0]);
+        content.set_font(font_name, 10.0);
+        content.set_leading(12.0);
+        content.show(Str(student.name.as_bytes()));
+        content.next_line_using_leading();
+        content.end_text();
+        content.restore_state();
+        content.restore_state();
+        content.save_state();
+
+        // Points
+        content.transform([1.0, 0.0, 0.0, 1.0, 393.8455, text_position]);
+        content.save_state();
+        content.set_fill_rgb(0.0, 0.0, 0.0);
+        content.begin_text();
+        content.set_text_matrix([1.0, 0.0, 0.0, 1.0, 0.0, 2.0]);
+        content.set_font(font_name, 10.0);
+        content.set_leading(12.0);
+        content.show(Str(student.points.unwrap().to_string().as_bytes()));
+        content.next_line_using_leading();
+        content.end_text();
+        content.restore_state();
+        content.restore_state();
+        content.save_state();
+
+        text_position -= text_step;
+    }
+
+    // table border lines
+
+    // table row lines
+    let stroke_step = 18.0;
+    let mut stroke_position = 540.0;
+    let mut student_counter = students.len();
+
+    content.set_line_cap(ButtCap);
+    content.set_line_join(MiterJoin);
+    content.set_stroke_rgb(0.0, 0.0, 0.0);
+    content.set_line_width(0.25);
+
+    while stroke_position >= stroke_step && student_counter > 0 {
+        content.end_path();
+        content.move_to(0.0, stroke_position);
+        content.line_to(table_width, stroke_position);
+        content.stroke();
+        stroke_position -= stroke_step;
+        student_counter -= 1;
+    }
+
+    // column borders
+    content.end_path();
+    content.move_to(89.50281, 36.0);
+    content.line_to(89.50281, table_height);
+    content.stroke();
+
+    content.end_path();
+    content.move_to(387.8455, 36.0);
+    content.line_to(387.8455, table_height);
+    content.stroke();
+
+    // table borders
+    content.end_path();
+    content.move_to(0.0, table_height);
+    content.line_to(table_width, table_height);
+    content.stroke();
+
+    content.end_path();
+    content.move_to(0.0, 0.0);
+    content.line_to(table_width, 0.0);
+    content.stroke();
+
+    content.end_path();
+    content.move_to(0.0, 0.0);
+    content.line_to(0.0, table_height);
+    content.stroke();
+
+    content.end_path();
+    content.move_to(table_width, 0.0);
+    content.line_to(table_width, table_height);
+    content.stroke();
+
+    content.restore_state();
+    content.restore_state();
+    content.save_state();
+    content.transform([1.0, 0.0, 0.0, 1.0, 62.69291, 201.0236]);
+    content.restore_state();
+
+    pdf_writer.stream(content_id, &content.finish());
+    let buffer: Vec<u8> = pdf_writer.finish();
+
+    std::fs::write(pdf_filename_path.into_os_string(), buffer)?;
+
+    Ok(())
+}
+
+fn create_table_rows(content: &mut Content, table_height: f32, table_width: f32, row_step: f32, students_count: usize) {
     content.transform([1.0, 0.0, 0.0, 1.0, 0.0, 0.0]);
     content.save_state();
     content.transform([1.0, 0.0, 0.0, 1.0, 62.69291, 759.0236]);
@@ -74,17 +204,22 @@ fn create_pdf_table_file(mut pdf_writer: PdfWriter, students: Vec<Student>, pdf_
     content.set_fill_rgb(1.0, 1.0, 1.0);
     content.end_path();
 
+    // FIXME: Extra columns for less than 30 students in group
     let mut row_position = 558.0;
-    let row_step = 36.0;
+    // let mut row_position = table_height;
+    let mut student_counter = students_count;
 
-    while row_position >= 0.0 {
-        content.rect(0.0, row_position, 469.8898, -18.0);
+    while row_position >= 0.0 && student_counter > 0 {
+        content.rect(0.0, row_position, table_width, -18.0);
         content.fill_even_odd();
         content.set_fill_rgb(0.878431, 0.878431, 0.878431);
         content.end_path();
         row_position -= row_step;
+        student_counter -= 1;
     }
+}
 
+fn create_table_header(content: &mut Content, font_name: Name) {
     // header
     content.save_state();
     content.transform([1.0, 0.0, 0.0, 1.0, 6.0, 543.0]);
@@ -153,121 +288,4 @@ fn create_pdf_table_file(mut pdf_writer: PdfWriter, students: Vec<Student>, pdf_
     content.end_text();
     content.restore_state();
     content.restore_state();
-
-    let mut text_position = 525.0;
-    let text_step = row_step / 2.0;
-
-    for student in students {
-        // Index number
-        content.set_fill_rgb(0.0, 0.0, 0.0);
-        content.save_state();
-        content.transform([1.0, 0.0, 0.0, 1.0, 6.0, text_position]);
-        content.save_state();
-        content.begin_text();
-        content.set_text_matrix([1.0, 0.0, 0.0, 1.0, 0.0, 2.0]);
-        content.set_font(font_name, 10.0);
-        content.set_leading(12.0);
-        content.show(Str(student.index.as_bytes()));
-        content.next_line_using_leading();
-        content.end_text();
-        content.restore_state();
-        content.restore_state();
-        content.save_state();
-
-        // First and last name of the student
-        content.transform([1.0, 0.0, 0.0, 1.0, 95.50281, text_position]);
-        content.save_state();
-        content.set_fill_rgb(0.0, 0.0, 0.0);
-        content.begin_text();
-        content.set_text_matrix([1.0, 0.0, 0.0, 1.0, 0.0, 2.0]);
-        content.set_font(font_name, 10.0);
-        content.set_leading(12.0);
-        content.show(Str(student.name.as_bytes()));
-        content.next_line_using_leading();
-        content.end_text();
-        content.restore_state();
-        content.restore_state();
-        content.save_state();
-
-        // Points
-        content.transform([1.0, 0.0, 0.0, 1.0, 393.8455, text_position]);
-        content.save_state();
-        content.set_fill_rgb(0.0, 0.0, 0.0);
-        content.begin_text();
-        content.set_text_matrix([1.0, 0.0, 0.0, 1.0, 0.0, 2.0]);
-        content.set_font(font_name, 10.0);
-        content.set_leading(12.0);
-        content.show(Str(student.points.unwrap().to_string().as_bytes()));
-        content.next_line_using_leading();
-        content.end_text();
-        content.restore_state();
-        content.restore_state();
-        content.save_state();
-
-        text_position -= text_step;
-    }
-
-    // table border lines
-
-    // table row lines
-    let mut stroke_position = 540.0;
-    let stroke_step = 18.0;
-
-    content.set_line_cap(ButtCap);
-    content.set_line_join(MiterJoin);
-    content.set_stroke_rgb(0.0, 0.0, 0.0);
-    content.set_line_width(0.25);
-
-    while stroke_position >= stroke_step {
-        content.end_path();
-        content.move_to(0.0, stroke_position);
-        content.line_to(469.8898, stroke_position);
-        content.stroke();
-        stroke_position -= stroke_step;
-    }
-
-    // column borders
-    content.end_path();
-    content.move_to(89.50281, 0.0);
-    content.line_to(89.50281, 558.0);
-    content.stroke();
-
-    content.end_path();
-    content.move_to(387.8455, 0.0);
-    content.line_to(387.8455, 558.0);
-    content.stroke();
-
-    // table borders
-    content.end_path();
-    content.move_to(0.0, 558.0);
-    content.line_to(469.8898, 558.0);
-    content.stroke();
-
-    content.end_path();
-    content.move_to(0.0, 0.0);
-    content.line_to(469.8898, 0.0);
-    content.stroke();
-
-    content.end_path();
-    content.move_to(0.0, 0.0);
-    content.line_to(0.0, 558.0);
-    content.stroke();
-
-    content.end_path();
-    content.move_to(469.8898, 0.0);
-    content.line_to(469.8898, 558.0);
-    content.stroke();
-
-    content.restore_state();
-    content.restore_state();
-    content.save_state();
-    content.transform([1.0, 0.0, 0.0, 1.0, 62.69291, 201.0236]);
-    content.restore_state();
-
-    pdf_writer.stream(content_id, &content.finish());
-    let buffer: Vec<u8> = pdf_writer.finish();
-
-    std::fs::write(pdf_filename_path.into_os_string(), buffer)?;
-
-    Ok(())
 }
