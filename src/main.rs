@@ -45,7 +45,6 @@ impl Subcommands {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let opt = Subcommands::from_args();
-    // println!("{:?}", opt);
 
     opt.execute()
 }
