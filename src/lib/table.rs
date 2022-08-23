@@ -2,11 +2,8 @@ use super::Student as Student;
 use std::error::Error;
 use std::path::PathBuf;
 use std::fs::File;
-use std::env::current_dir;
 use csv::Reader;
 use std::io::Read;
-use std::io::Write;
-use pdf_writer::types::{ ActionType, AnnotationType, BorderType };
 use pdf_writer::{ Content, Finish, Name, PdfWriter, Rect, Ref, Str };
 use pdf_writer::types::{ LineJoinStyle::MiterJoin, LineCapStyle::ButtCap };
 
@@ -41,8 +38,8 @@ fn parse_students_from_grading_file<R: Read>(students_grading_data: &mut Reader<
 
 fn create_pdf_table_file(mut pdf_writer: PdfWriter, students: &Vec<Student>, pdf_filename_path: PathBuf) -> Result<(), Box<dyn Error>> {
     let table_width = 469.8898;
-    // let table_height = students.len() as f32 * 18.0;
-    let table_height = 558.0;
+    let table_height = students.len() as f32 * 18.0;
+    // let table_height = 558.0;
     let row_step = 36.0;
     
     let catalog_id = Ref::new(1);
@@ -148,35 +145,43 @@ fn create_pdf_table_file(mut pdf_writer: PdfWriter, students: &Vec<Student>, pdf
     }
 
     // column borders
+
+    // between 1st and 2nd column
     content.end_path();
-    content.move_to(89.50281, 36.0);
-    content.line_to(89.50281, table_height);
+    content.move_to(89.50281, 542.0 - table_height);
+    content.line_to(89.50281, 558.0);
     content.stroke();
 
+    // between 2nd and 3rd column
     content.end_path();
-    content.move_to(387.8455, 36.0);
-    content.line_to(387.8455, table_height);
+    content.move_to(387.8455, 542.0 - table_height);
+    content.line_to(387.8455, 558.0);
     content.stroke();
 
     // table borders
+
+    // upper border
     content.end_path();
-    content.move_to(0.0, table_height);
-    content.line_to(table_width, table_height);
+    content.move_to(0.0, 558.0);
+    content.line_to(table_width, 558.0);
     content.stroke();
 
+    // down border
     content.end_path();
-    content.move_to(0.0, 0.0);
-    content.line_to(table_width, 0.0);
+    content.move_to(0.0, 542.0 - table_height);
+    content.line_to(table_width, 542.0 - table_height);
     content.stroke();
 
+    // left border
     content.end_path();
-    content.move_to(0.0, 0.0);
-    content.line_to(0.0, table_height);
+    content.move_to(0.0, 542.0 - table_height);
+    content.line_to(0.0, 558.0);
     content.stroke();
 
+    // right border
     content.end_path();
-    content.move_to(table_width, 0.0);
-    content.line_to(table_width, table_height);
+    content.move_to(table_width, 542.0 - table_height);
+    content.line_to(table_width, 558.0);
     content.stroke();
 
     content.restore_state();
@@ -209,7 +214,7 @@ fn create_table_rows(content: &mut Content, table_height: f32, table_width: f32,
     // let mut row_position = table_height;
     let mut student_counter = students_count;
 
-    while row_position >= 0.0 && student_counter > 0 {
+    while row_position > 542.0 - table_height && student_counter > 0 {
         content.rect(0.0, row_position, table_width, -18.0);
         content.fill_even_odd();
         content.set_fill_rgb(0.878431, 0.878431, 0.878431);
