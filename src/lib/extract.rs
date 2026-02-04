@@ -45,15 +45,27 @@ fn extract_from_student_computer(file: Entry<File>, dest_dirname: &PathBuf) {
 
         let filepath = f.header().path().unwrap();
 
-        let file_extension = match get_extension_from_path(&filepath) {
-            Some(file_extension) => file_extension,
+        // let file_extension = match get_extension_from_path(&filepath) {
+        //     Some(file_extension) => file_extension,
+        //     None => continue,
+        // };
+
+        // if file_extension == "c" {
+        //     let mut dest_filepath = dest_dirname.clone();
+        //     dest_filepath.push(filepath.parent().unwrap().file_name().unwrap());
+        //     dest_filepath.set_extension(file_extension);
+        //     f.unpack(dest_filepath.as_path()).unwrap();
+        // }
+
+        let filename = match filepath.file_name() {
+            Some(filename_path) => filename_path.to_string_lossy(),
             None => continue,
         };
 
-        if file_extension == "c" {
+        if filename == "zad.c" || filename == "resenje.c" {
             let mut dest_filepath = dest_dirname.clone();
             dest_filepath.push(filepath.parent().unwrap().file_name().unwrap());
-            dest_filepath.set_extension(file_extension);
+            dest_filepath.set_extension("c");
             f.unpack(dest_filepath.as_path()).unwrap();
         }
     }
